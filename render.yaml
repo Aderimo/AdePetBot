@@ -3,8 +3,7 @@ services:
     name: adepetbot
     runtime: node
     plan: free
-    buildCommand: npm ci && npx prisma generate
-    preDeployCommand: npx prisma db push
+    buildCommand: npm ci && npx prisma generate && npx prisma db push
     startCommand: npm start
     healthCheckPath: /health
     envVars:
