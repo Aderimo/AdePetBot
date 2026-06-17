@@ -1,0 +1,657 @@
+// ============================================================
+// AdePetBot – Prisma Schema
+// Task 3: Database foundations for the full game system
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYER & SESSION
+// ────────────────────────────────────────────────────────────
+
+model Player {
+  id              String   @id @default(uuid())
+  discordId       String   @unique @map("discord_id")
+  username        String   @default("")
+  level           Int      @default(1)
+  xp              Int      @default(0)
+  currency        Int      @default(0)
+  diamonds        Int      @default(0)
+  currentRegionId String?  @map("current_region_id")
+  profileData     Json     @default("{}") @map("profile_data")
+  unlockedContent Json     @default("[]") @map("unlocked_content")
+  pvpRating       Int      @default(1000) @map("pvp_rating")
+  pvpWins         Int      @default(0) @map("pvp_wins")
+  pvpLosses       Int      @default(0) @map("pvp_losses")
+  securityFlags   Json     @default("{}") @map("security_flags")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sessions          Session[]
+  ownedPets         OwnedPet[]
+  activeParty       ActivePartySlot[]
+  inventory         InventoryItem[]
+  eggs              Egg[]
+  boxes             Box[]
+  questProgress     QuestProgress[]
+  craftingHistory    CraftingHistory[]
+  marketListings    MarketListing[]
+  tradeOffersFrom   TradeOffer[]       @relation("TradeFrom")
+  tradeOffersTo     TradeOffer[]       @relation("TradeTo")
+  transactions      Transaction[]
+  bossParticipants  BossParticipant[]
+  shopPurchases     ShopPurchase[]
+  subscriptions     Subscription[]
+  seasonSnapshots   SeasonSnapshot[]
+  analyticsEvents   AnalyticsEvent[]
+  diamondLedger     DiamondLedger[]
+  utilityJobs       UtilityJob[]
+  friendshipsA      Friendship[]       @relation("FriendA")
+  friendshipsB      Friendship[]       @relation("FriendB")
+  guildMemberships  GuildMember[]
+  battleHistory     BattleParticipant[]
+
+  @@index([discordId])
+  @@index([level])
+  @@map("players")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  token     String   @unique
+  data      Json     @default("{}")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ────────────────────────────────────────────────────────────
+// PET SPECIES, TEMPLATES & OWNED PETS
+// ────────────────────────────────────────────────────────────
+
+model PetSpecies {
+  id            String @id @default(uuid())
+  name          String @unique
+  animalFamily  String @map("animal_family")
+  bodyClass     String @map("body_class")
+  habitat       String @default("land")
+  temperament   String @default("neutral")
+  description   String @default("")
+  metadata      Json   @default("{}") 
+
+  templates PetTemplate[]
+
+  @@index([animalFamily])
+  @@map("pet_species")
+}
+
+model PetTemplate {
+  id              String @id @default(uuid())
+  speciesId       String @map("species_id")
+  name            String
+  element         String @default("neutral")
+  baseHp          Int    @map("base_hp")
+  baseAtk         Int    @map("base_atk")
+  baseDef         Int    @map("base_def")
+  baseSpd         Int    @map("base_spd")
+  passiveAbility  String @default("") @map("passive_ability")
+  evolutionTree   Json   @default("{}") @map("evolution_tree")
+  utilityRoles    Json   @default("[]") @map("utility_roles")
+  spawnRegions    Json   @default("[]") @map("spawn_regions")
+  rarity          String @default("common")
+  visualData      Json   @default("{}") @map("visual_data")
+
+  species   PetSpecies @relation(fields: [speciesId], references: [id])
+  ownedPets OwnedPet[]
+
+  @@index([speciesId])
+  @@index([rarity])
+  @@index([element])
+  @@map("pet_templates")
+}
+
+model OwnedPet {
+  id              String   @id @default(uuid())
+  ownerId         String   @map("owner_id")
+  templateId      String   @map("template_id")
+  nickname        String   @default("")
+  level           Int      @default(1)
+  xp              Int      @default(0)
+  rarity          String   @default("common")
+  variant         String   @default("normal")
+  element         String   @default("neutral")
+  evolutionStage  Int      @default(0) @map("evolution_stage")
+  mutationType    String?  @map("mutation_type")
+  mutationData    Json     @default("{}") @map("mutation_data")
+  statBonuses     Json     @default("{}") @map("stat_bonuses")
+  isLocked        Boolean  @default(false) @map("is_locked")
+  isListed        Boolean  @default(false) @map("is_listed")
+  isDefeated      Boolean  @default(false) @map("is_defeated")
+  isExhausted     Boolean  @default(false) @map("is_exhausted")
+  obtainedAt      DateTime @default(now()) @map("obtained_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  owner          Player           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  template       PetTemplate      @relation(fields: [templateId], references: [id])
+  partySlots     ActivePartySlot[]
+  equipment      PetEquipment[]
+  marketListings MarketListing[]
+
+  @@index([ownerId])
+  @@index([templateId])
+  @@index([rarity])
+  @@map("owned_pets")
+}
+
+// ────────────────────────────────────────────────────────────
+// ACTIVE PARTY & PET EQUIPMENT
+// ────────────────────────────────────────────────────────────
+
+model ActivePartySlot {
+  id       String @id @default(uuid())
+  playerId String @map("player_id")
+  petId    String @map("pet_id")
+  slot     Int    // 0=lead, 1=support1, 2=support2
+
+  player Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  pet    OwnedPet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, slot])
+  @@unique([playerId, petId])
+  @@map("active_party_slots")
+}
+
+model PetEquipment {
+  id           String @id @default(uuid())
+  petId        String @map("pet_id")
+  slot         String // collar, armor, tool, charm, food_buff
+  itemName     String @map("item_name")
+  rarity       String @default("common")
+  statBonuses  Json   @default("{}") @map("stat_bonuses")
+  durability   Int    @default(100)
+  metadata     Json   @default("{}")
+
+  pet OwnedPet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@unique([petId, slot])
+  @@index([petId])
+  @@map("pet_equipment")
+}
+
+// ────────────────────────────────────────────────────────────
+// INVENTORY
+// ────────────────────────────────────────────────────────────
+
+model InventoryItem {
+  id         String @id @default(uuid())
+  playerId   String @map("player_id")
+  itemType   String @map("item_type")   // material, consumable, equipment, key_item
+  itemId     String @map("item_id")
+  quantity   Int    @default(1)
+  metadata   Json   @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, itemType, itemId])
+  @@index([playerId])
+  @@index([itemType])
+  @@map("inventory_items")
+}
+
+// ────────────────────────────────────────────────────────────
+// EGGS & BOXES
+// ────────────────────────────────────────────────────────────
+
+model Egg {
+  id         String   @id @default(uuid())
+  playerId   String   @map("player_id")
+  eggType    String   @map("egg_type")
+  source     String   @default("standard") // standard, event, battle_pass, boss_drop
+  isHatched  Boolean  @default(false) @map("is_hatched")
+  hatchedPetId String? @map("hatched_pet_id")
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("eggs")
+}
+
+model Box {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  boxType     String   @map("box_type")
+  isOpened    Boolean  @default(false) @map("is_opened")
+  pityCounter Int      @default(0) @map("pity_counter")
+  rewards     Json     @default("[]")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("boxes")
+}
+
+// ────────────────────────────────────────────────────────────
+// QUESTS
+// ────────────────────────────────────────────────────────────
+
+model QuestProgress {
+  id            String   @id @default(uuid())
+  playerId      String   @map("player_id")
+  questId       String   @map("quest_id")
+  questType     String   @map("quest_type") // daily, weekly, monthly
+  objectives    Json     @default("[]")
+  isCompleted   Boolean  @default(false) @map("is_completed")
+  rewardsGiven  Boolean  @default(false) @map("rewards_given")
+  streak        Int      @default(0)
+  resetsAt      DateTime @map("resets_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([questType])
+  @@index([resetsAt])
+  @@map("quest_progress")
+}
+
+// ────────────────────────────────────────────────────────────
+// CRAFTING
+// ────────────────────────────────────────────────────────────
+
+model CraftingHistory {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  recipeId    String   @map("recipe_id")
+  quantity    Int      @default(1)
+  success     Boolean  @default(true)
+  outputItem  String   @map("output_item")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("crafting_history")
+}
+
+// ────────────────────────────────────────────────────────────
+// BOSS ENCOUNTERS
+// ────────────────────────────────────────────────────────────
+
+model BossEncounter {
+  id              String   @id @default(uuid())
+  bossId          String   @map("boss_id")
+  bossType        String   @map("boss_type") // solo, raid, world
+  difficulty      Int      @default(1)
+  hp              Int      @default(10000)
+  currentHp       Int      @default(10000) @map("current_hp")
+  isActive        Boolean  @default(true) @map("is_active")
+  regionId        String?  @map("region_id")
+  lootTable       Json     @default("[]") @map("loot_table")
+  metadata        Json     @default("{}")
+  startsAt        DateTime @default(now()) @map("starts_at")
+  endsAt          DateTime? @map("ends_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  participants BossParticipant[]
+
+  @@index([bossId])
+  @@index([isActive])
+  @@map("boss_encounters")
+}
+
+model BossParticipant {
+  id            String   @id @default(uuid())
+  encounterId   String   @map("encounter_id")
+  playerId      String   @map("player_id")
+  damageDealt   Int      @default(0) @map("damage_dealt")
+  lootReceived  Json     @default("[]") @map("loot_received")
+  joinedAt      DateTime @default(now()) @map("joined_at")
+
+  encounter BossEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  player    Player        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([encounterId, playerId])
+  @@map("boss_participants")
+}
+
+// ────────────────────────────────────────────────────────────
+// MARKET & TRADING
+// ────────────────────────────────────────────────────────────
+
+model MarketListing {
+  id          String    @id @default(uuid())
+  sellerId    String    @map("seller_id")
+  petId       String?   @map("pet_id")
+  itemType    String?   @map("item_type")
+  itemId      String?   @map("item_id")
+  quantity    Int       @default(1)
+  price       Int
+  isAuction   Boolean   @default(false) @map("is_auction")
+  auctionEnd  DateTime? @map("auction_end")
+  status      String    @default("active") // active, sold, cancelled, expired
+  buyerId     String?   @map("buyer_id")
+  metadata    Json      @default("{}")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  seller Player    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  pet    OwnedPet? @relation(fields: [petId], references: [id])
+
+  @@index([sellerId])
+  @@index([status])
+  @@index([itemType])
+  @@map("market_listings")
+}
+
+model TradeOffer {
+  id           String   @id @default(uuid())
+  fromPlayerId String   @map("from_player_id")
+  toPlayerId   String   @map("to_player_id")
+  offeredItems Json     @default("[]") @map("offered_items")
+  requestedItems Json   @default("[]") @map("requested_items")
+  status       String   @default("pending") // pending, accepted, rejected, cancelled
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  fromPlayer Player @relation("TradeFrom", fields: [fromPlayerId], references: [id], onDelete: Cascade)
+  toPlayer   Player @relation("TradeTo", fields: [toPlayerId], references: [id], onDelete: Cascade)
+
+  @@index([fromPlayerId])
+  @@index([toPlayerId])
+  @@index([status])
+  @@map("trade_offers")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  type        String   // purchase, sale, trade, fee, reward
+  amount      Int
+  currency    String   @default("gold") // gold, diamonds
+  referenceId String?  @map("reference_id")
+  description String   @default("")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([type])
+  @@map("transactions")
+}
+
+// ────────────────────────────────────────────────────────────
+// SHOP, SUBSCRIPTIONS & DIAMOND ECONOMY
+// ────────────────────────────────────────────────────────────
+
+model ShopPurchase {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  productId   String   @map("product_id")
+  quantity    Int      @default(1)
+  pricePaid   Int      @map("price_paid")
+  currency    String   @default("diamonds")
+  receiptData Json     @default("{}") @map("receipt_data")
+  status      String   @default("completed") // completed, refunded, revoked
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("shop_purchases")
+}
+
+model Subscription {
+  id          String    @id @default(uuid())
+  playerId    String    @map("player_id")
+  tier        String    // free, basic, premium, ultimate
+  isActive    Boolean   @default(true) @map("is_active")
+  perks       Json      @default("{}") 
+  startsAt    DateTime  @default(now()) @map("starts_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("subscriptions")
+}
+
+model DiamondLedger {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  type        String   // purchase, reward, spend, refund, admin_adjust
+  amount      Int
+  balance     Int
+  description String   @default("")
+  referenceId String?  @map("reference_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("diamond_ledger")
+}
+
+// ────────────────────────────────────────────────────────────
+// SEASONS
+// ────────────────────────────────────────────────────────────
+
+model Season {
+  id          String    @id @default(uuid())
+  name        String
+  number      Int       @unique
+  isActive    Boolean   @default(false) @map("is_active")
+  contentFlags Json     @default("{}") @map("content_flags")
+  rewards     Json      @default("[]")
+  startsAt    DateTime  @map("starts_at")
+  endsAt      DateTime  @map("ends_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  snapshots SeasonSnapshot[]
+
+  @@index([isActive])
+  @@map("seasons")
+}
+
+model SeasonSnapshot {
+  id         String   @id @default(uuid())
+  seasonId   String   @map("season_id")
+  playerId   String   @map("player_id")
+  rank       Int      @default(0)
+  rating     Int      @default(0)
+  stats      Json     @default("{}")
+  rewards    Json     @default("[]")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, playerId])
+  @@map("season_snapshots")
+}
+
+// ────────────────────────────────────────────────────────────
+// UTILITY JOBS
+// ────────────────────────────────────────────────────────────
+
+model UtilityJob {
+  id           String    @id @default(uuid())
+  playerId     String    @map("player_id")
+  profession   String    // fishing, mining, woodcutting, farming, cooking, gathering, scouting
+  petId        String?   @map("pet_id")
+  status       String    @default("in_progress") // in_progress, completed, failed
+  rewards      Json      @default("[]")
+  xpGained     Int       @default(0) @map("xp_gained")
+  startsAt     DateTime  @default(now()) @map("starts_at")
+  completesAt  DateTime  @map("completes_at")
+  completedAt  DateTime? @map("completed_at")
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([status])
+  @@map("utility_jobs")
+}
+
+// ────────────────────────────────────────────────────────────
+// BATTLES (PvE & PvP)
+// ────────────────────────────────────────────────────────────
+
+model Battle {
+  id          String   @id @default(uuid())
+  battleType  String   @map("battle_type") // pve_wild, pve_trainer, friendly, ranked, tournament
+  mode        String   @default("turn_based") // turn_based, auto, quick_sim, realtime
+  status      String   @default("active") // active, finished, forfeited
+  regionId    String?  @map("region_id")
+  turnData    Json     @default("[]") @map("turn_data")
+  result      Json     @default("{}") 
+  rewards     Json     @default("{}")
+  metadata    Json     @default("{}")
+  startedAt   DateTime @default(now()) @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+
+  participants BattleParticipant[]
+
+  @@index([battleType])
+  @@index([status])
+  @@map("battles")
+}
+
+model BattleParticipant {
+  id          String @id @default(uuid())
+  battleId    String @map("battle_id")
+  playerId    String? @map("player_id")
+  isNpc       Boolean @default(false) @map("is_npc")
+  teamData    Json   @default("[]") @map("team_data")
+  stats       Json   @default("{}") 
+  result      String @default("pending") // pending, won, lost, draw, forfeited
+
+  battle Battle  @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  player Player? @relation(fields: [playerId], references: [id])
+
+  @@index([battleId])
+  @@index([playerId])
+  @@map("battle_participants")
+}
+
+// ────────────────────────────────────────────────────────────
+// GUILDS & FRIENDSHIPS
+// ────────────────────────────────────────────────────────────
+
+model Guild {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String   @default("")
+  level       Int      @default(1)
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  members GuildMember[]
+
+  @@map("guilds")
+}
+
+model GuildMember {
+  id       String   @id @default(uuid())
+  guildId  String   @map("guild_id")
+  playerId String   @map("player_id")
+  role     String   @default("member") // leader, officer, member
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  guild  Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([guildId, playerId])
+  @@map("guild_members")
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  playerAId String   @map("player_a_id")
+  playerBId String   @map("player_b_id")
+  status    String   @default("pending") // pending, accepted, blocked
+  createdAt DateTime @default(now()) @map("created_at")
+
+  playerA Player @relation("FriendA", fields: [playerAId], references: [id], onDelete: Cascade)
+  playerB Player @relation("FriendB", fields: [playerBId], references: [id], onDelete: Cascade)
+
+  @@unique([playerAId, playerBId])
+  @@map("friendships")
+}
+
+// ────────────────────────────────────────────────────────────
+// ANALYTICS & LOGGING
+// ────────────────────────────────────────────────────────────
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  playerId  String?  @map("player_id")
+  eventType String   @map("event_type")
+  data      Json     @default("{}")
+  sessionId String?  @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player? @relation(fields: [playerId], references: [id])
+
+  @@index([playerId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
+model ErrorLog {
+  id        String   @id @default(uuid())
+  severity  String   @default("error") // info, warning, error, critical
+  message   String
+  stack     String?
+  context   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([severity])
+  @@index([createdAt])
+  @@map("error_logs")
+}
+
+// ────────────────────────────────────────────────────────────
+// WEEKLY EVENTS
+// ────────────────────────────────────────────────────────────
+
+model WeeklyEvent {
+  id          String   @id @default(uuid())
+  name        String
+  eventType   String   @map("event_type") // double_xp, double_drop, secret_spawn, boss_rush
+  multipliers Json     @default("{}") 
+  isActive    Boolean  @default(false) @map("is_active")
+  startsAt    DateTime @map("starts_at")
+  endsAt      DateTime @map("ends_at")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([isActive])
+  @@map("weekly_events")
+}
