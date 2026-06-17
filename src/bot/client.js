@@ -47,6 +47,9 @@ export function createDiscordClient() {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildVoiceStates,
+      // GuildMembers is privileged; enable it here only after it is enabled in the Discord Developer Portal.
     ],
   });
 

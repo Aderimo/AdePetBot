@@ -15,25 +15,25 @@ Ilk hedef, oynanabilir ve deploy edilebilir bir MVP cikarmaktir:
 
 - [x] PDF ve `.kiro` dokumanlarini tek ana plana indir.
 - [ ] Bozuk karakterleri ve eski placeholder metinleri temizle.
-- [ ] Discord komutlarini `src/bot/commands` altina tasi.
-- [ ] REST route yapisini `src/api` altinda toparla.
-- [ ] Oyun domain kodlari icin `src/game` sinirini olustur.
-- [ ] Veritabani erisimi icin `src/db` sinirini olustur.
-- [ ] Render free deploy icin `render.yaml` ekle.
-- [ ] Render ortaminda `PORT` env degiskenini destekle.
-- [ ] `.env.example` dosyasini PostgreSQL ve Render akisi ile uyumlu hale getir.
-- [ ] Testleri ve Prisma schema dogrulamasini calistir.
+- [x] Discord komutlarini `src/bot/commands` altina tasi.
+- [x] REST route yapisini `src/api` altinda toparla.
+- [x] Oyun domain kodlari icin `src/game` sinirini olustur.
+- [x] Veritabani erisimi icin `src/db` sinirini olustur.
+- [x] Render free deploy icin `render.yaml` ekle.
+- [x] Render ortaminda `PORT` env degiskenini destekle.
+- [x] `.env.example` dosyasini PostgreSQL ve Render akisi ile uyumlu hale getir.
+- [x] Testleri ve Prisma schema dogrulamasini calistir.
 
 ## Faz 1 - Calisan Bot ve API Temeli
 
-- [ ] Discord client acilis, graceful shutdown ve komut yukleme akisini temizle.
-- [ ] `/ping` komutu.
-- [ ] `/yardim` komutu.
+- [x] Discord client acilis, graceful shutdown ve komut yukleme akisini temizle.
+- [x] `/ping` komutu.
+- [x] `/yardim` komutu.
 - [ ] `/profil` komutunu gercek player verisine bagla.
-- [ ] `GET /health` endpointini koru.
-- [ ] `GET /api/v1` ve servis durumu endpointlerini duzenle.
-- [ ] Tum API requestleri icin correlation ID ve response time logla.
-- [ ] Standart hata cevaplarini koru.
+- [x] `GET /health` endpointini koru.
+- [x] `GET /api/v1` ve servis durumu endpointlerini duzenle.
+- [x] Tum API requestleri icin correlation ID ve response time logla.
+- [x] Standart hata cevaplarini koru.
 - [ ] Turkce ve Ingilizce coklu dil altyapisini ekle.
 
 ## Faz 2 - Oyuncu, Pet ve Progression
@@ -137,8 +137,8 @@ Ilk hedef, oynanabilir ve deploy edilebilir bir MVP cikarmaktir:
 - [ ] Kritik game servisleri icin unit testler.
 - [ ] API endpointleri icin integration testler.
 - [ ] Discord command handler testleri.
-- [ ] Prisma schema validation.
-- [ ] Render deploy smoke test.
+- [x] Prisma schema validation.
+- [x] Render deploy smoke test.
 - [ ] Guvenlik: input validation, rate limit, CSRF, password hashing gereken yerler.
 - [ ] Log retention ve kritik hata bildirim adapterleri.
 
