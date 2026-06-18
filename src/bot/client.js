@@ -85,7 +85,9 @@ export function createDiscordClient() {
         ephemeral: true,
       };
 
-      if (interaction.replied || interaction.deferred) {
+      if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({ content: errorMessage.content, embeds: [] });
+      } else if (interaction.replied) {
         await interaction.followUp(errorMessage);
       } else {
         await interaction.reply(errorMessage);

@@ -4,7 +4,7 @@ Bu klasor oyun domain kodlari icindir. Discord komutlari ve REST API controllerl
 
 Planlanan modul sinirlari:
 
-- `players`: oyuncu profili, XP, level ve para birimi.
+- `players`: oyuncu profili, baslangic peti, XP, level ve para birimi. Ilk servis aktiftir.
 - `pets`: baslangic peti, pet statlari, rarity, mood ve passive ability.
 - `inventory`: materyal, consumable, equipment ve pet envanteri.
 - `professions`: madencilik, balikcilik, odunculuk, ciftcilik ve yemek pisirme.

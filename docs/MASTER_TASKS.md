@@ -29,7 +29,7 @@ Ilk hedef, oynanabilir ve deploy edilebilir bir MVP cikarmaktir:
 - [x] Discord client acilis, graceful shutdown ve komut yukleme akisini temizle.
 - [x] `/ping` komutu.
 - [x] `/yardim` komutu.
-- [ ] `/profil` komutunu gercek player verisine bagla.
+- [x] `/profil` komutunu gercek player verisine bagla.
 - [x] `GET /health` endpointini koru.
 - [x] `GET /api/v1` ve servis durumu endpointlerini duzenle.
 - [x] Tum API requestleri icin correlation ID ve response time logla.
@@ -38,14 +38,15 @@ Ilk hedef, oynanabilir ve deploy edilebilir bir MVP cikarmaktir:
 
 ## Faz 2 - Oyuncu, Pet ve Progression
 
-- [ ] Discord user ID ile oyuncu kaydi/yukleme.
-- [ ] Kullanici basina baslangic peti.
-- [ ] Pet level, XP, mood, rarity ve passive ability.
+- [x] Discord user ID ile oyuncu kaydi/yukleme.
+- [x] Kullanici basina baslangic peti.
+- [x] Pet level, XP, mood, rarity ve passive ability veri modelini kur.
 - [ ] Genel oyuncu level ve XP.
-- [ ] Gold ve gem para birimleri.
+- [x] Gold ve gem para birimlerini oyuncu profiline ekle.
 - [ ] Level-up odulleri.
 - [ ] Icerik kilidi acma kurallari.
-- [ ] Profil ve pet listeleme API/komutlari.
+- [x] Discord profil komutu.
+- [ ] Pet listeleme API/komutlari.
 
 ## Faz 3 - Aktivite, Meslekler ve Anti-Abuse
 
@@ -134,9 +135,11 @@ Ilk hedef, oynanabilir ve deploy edilebilir bir MVP cikarmaktir:
 
 ## Teknik Kalite Kapilari
 
-- [ ] Kritik game servisleri icin unit testler.
+- [x] Oyuncu/baslangic peti servisi icin unit testler.
+- [ ] Diger kritik game servisleri icin unit testler.
 - [ ] API endpointleri icin integration testler.
-- [ ] Discord command handler testleri.
+- [x] `/profil` Discord komut testi.
+- [ ] Genel Discord command handler testleri.
 - [x] Prisma schema validation.
 - [x] Render deploy smoke test.
 - [ ] Guvenlik: input validation, rate limit, CSRF, password hashing gereken yerler.

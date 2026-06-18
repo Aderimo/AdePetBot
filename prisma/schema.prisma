@@ -120,6 +120,7 @@ model PetTemplate {
   ownedPets OwnedPet[]
 
   @@index([speciesId])
+  @@unique([speciesId, name])
   @@index([rarity])
   @@index([element])
   @@map("pet_templates")
@@ -132,6 +133,7 @@ model OwnedPet {
   nickname        String   @default("")
   level           Int      @default(1)
   xp              Int      @default(0)
+  mood            Int      @default(100)
   rarity          String   @default("common")
   variant         String   @default("normal")
   element         String   @default("neutral")

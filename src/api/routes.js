@@ -8,8 +8,8 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     message: 'AdePetBot API v1',
     modules: {
-      profile: 'planned',
-      pets: 'planned',
+      profile: 'discord-active',
+      pets: 'starter-pet-active',
       inventory: 'planned',
       professions: 'planned',
       market: 'planned',
