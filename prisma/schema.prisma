@@ -120,7 +120,6 @@ model PetTemplate {
   ownedPets OwnedPet[]
 
   @@index([speciesId])
-  @@unique([speciesId, name])
   @@index([rarity])
   @@index([element])
   @@map("pet_templates")

@@ -10,6 +10,7 @@ const STARTER_SPECIES = {
 };
 
 const STARTER_TEMPLATE = {
+  id: 'starter-misket',
   name: 'Misket',
   element: 'neutral',
   baseHp: 24,
@@ -98,14 +99,13 @@ export async function getOrCreatePlayerProfile(user, database = prisma) {
       create: STARTER_SPECIES,
     });
 
+    const { id: starterTemplateId, ...starterTemplateData } = STARTER_TEMPLATE;
     const starterTemplate = await tx.petTemplate.upsert({
-      where: {
-        speciesId_name: {
-          speciesId: starterSpecies.id,
-          name: STARTER_TEMPLATE.name,
-        },
+      where: { id: starterTemplateId },
+      update: {
+        ...starterTemplateData,
+        speciesId: starterSpecies.id,
       },
-      update: STARTER_TEMPLATE,
       create: {
         ...STARTER_TEMPLATE,
         speciesId: starterSpecies.id,
